@@ -1,6 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import io
+from collections import Counter
+import powerlaw
+import matplotlib.pyplot as plt
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
@@ -42,6 +45,7 @@ def main():
 	posts = soup.find_all(id= lambda x: x and x.startswith("post60"))
 	index = 1
 	ListOfPosts = []
+	ListOfLocations = []
 	for i in posts:
 		responseto = []
 		postnumber = index
@@ -50,12 +54,38 @@ def main():
 		username = i.find(class_="bigusername").text
 		comment = i.find(id= lambda x: x and x.startswith("post_message_")).text
 		responses = i.find_all("strong")
+		ListOfLocations.append(location)
 		for j in responses:
-			responseto.append(j.get_text())
+			responseto.append(j.get_text())	
 		postdate = i.find(class_="thead").text.strip()
 		reputation = i.find(class_="smallfont").text.strip().replace("\n", " ").replace("\t", "")
 		ListOfPosts.append(Post(postnumber, username, location, comment, postdate, reputation, responseto))
 	for i in ListOfPosts:
 		print("\n\n", i.postnumber, i.username, i.location, i.postdate, i.reputation, "Response to:", i.responseto, "\n")
+	
+
+	#count location occurrences
+	class MyCounter(Counter):
+		def __str__(self):
+			return "\n".join('{} {}'.format(k, v) for k, v in self.items())
+
+	def getList(dict):
+		return list(dict.keys())
+
+	location_count = MyCounter(ListOfLocations) 
+	location_count_dict = dict(Counter(ListOfLocations))
+	count_values = list(location_count_dict.values()) #list of values of location occurrences
+	count_location = getList(location_count_dict) #list of locations, no dublicates and in same order as previous values
+	location_counter = Counter(ListOfLocations)
+
+	print("\n\n",location_count, "\n") #prints all locations with their occurrences
+	plt.hist(count_values, bins=range(max(count_values))) #histogram of location occurrences
+	plt.show()
+
+	#powerlaw distribution, can not be done with given values
+	results = powerlaw.Fit(count_values)
+	print(results.power_law.alpha)
+	print(results.power_law.xmin)
+	R, p = results.distribution_compare('power_law', 'lognormal')
 
 main()
