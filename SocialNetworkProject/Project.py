@@ -76,6 +76,31 @@ def TableforGraph(G):
 
 	return(GraphTable)
 
+def CentralityHist(G):
+	DegreeCentrality = nx.degree_centrality(G)
+	plt.figure()
+	plt.title("Degree centrality distribution")
+	plt.hist(list(DegreeCentrality.values()))
+	return plt.show()
+
+def ClusteringHist(G):
+	localClustering = nx.clustering(G)
+	plt.figure()
+	plt.title("Local clustering coefficient distribution")
+	plt.hist(list(localClustering.values()))
+	return plt.show()
+
+def PowerLawCentrality(G):
+	DegreeCentrality = nx.degree_centrality(G)
+	plt.plot(*zip(*sorted(DegreeCentrality.items())))
+	plt.title("power law distribution of degree centrality")
+	return plt.show()
+
+def PowerLawClustering(G):
+	localClustering = nx.clustering(G)
+	plt.plot(*zip(*sorted(localClustering.items())))
+	plt.title("power law distribution of local clustering")
+	return plt.show()
 
 
 def main():
@@ -117,12 +142,17 @@ def main():
 	location_count = MyCounter(ListOfLocations) 
 	location_count_dict = dict(Counter(ListOfLocations))
 	count_values = list(location_count_dict.values()) #list of values of location occurrences
+	count_values = sorted(i for i in count_values if i < 200)
+	print(count_values)
 	count_location = getList(location_count_dict) #list of locations, no dublicates and in same order as previous values
 	location_counter = Counter(ListOfLocations)
 	print(ListOfLengths)
 	print("\n\n",location_count, "\n") #prints all locations with their occurrences
-	plt.hist(count_values, bins=range(max(count_values))) #histogram of location occurrences
+	plt.bar(range(len(count_values)), count_values)#location occurrences
+	plt.title("Location distribution")
 	plt.show()
+
+
 
 	#powerlaw distribution, can not be done with given values
 	results = powerlaw.Fit(count_values)
@@ -133,5 +163,10 @@ def main():
 	G = ConstructGraph(ListOfPosts)
 	Table = TableforGraph(G)
 	print(Table)
+
+	CentralityHist(G)
+	ClusteringHist(G)
+	PowerLawCentrality(G)
+	PowerLawClustering(G)
 
 main()
