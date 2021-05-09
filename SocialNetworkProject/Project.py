@@ -6,6 +6,7 @@ import powerlaw
 import matplotlib.pyplot as plt
 import networkx as nx
 
+
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
 		self.postnumber = postnumber
@@ -92,13 +93,19 @@ def ClusteringHist(G):
 
 def PowerLawCentrality(G):
 	DegreeCentrality = nx.degree_centrality(G)
-	plt.plot(*zip(*sorted(DegreeCentrality.items())))
+	DegreeCentrality_values = list(DegreeCentrality.values())
+	DegreeCentrality_values = sorted(DegreeCentrality_values, reverse=True)
+	print(DegreeCentrality_values)
+	plt.plot(DegreeCentrality_values)
 	plt.title("power law distribution of degree centrality")
 	return plt.show()
 
 def PowerLawClustering(G):
 	localClustering = nx.clustering(G)
-	plt.plot(*zip(*sorted(localClustering.items())))
+	localClustering_values = list(localClustering.values())
+	localClustering_values = sorted(localClustering_values, reverse=True)
+	print(localClustering_values)
+	plt.plot(localClustering_values)
 	plt.title("power law distribution of local clustering")
 	return plt.show()
 
@@ -132,14 +139,9 @@ def main():
 	
 
 	#count location occurrences
-	class MyCounter(Counter):
-		def __str__(self):
-			return "\n".join('{} {}'.format(k, v) for k, v in self.items())
-
 	def getList(dict):
 		return list(dict.keys())
 
-	location_count = MyCounter(ListOfLocations) 
 	location_count_dict = dict(Counter(ListOfLocations))
 	count_values = list(location_count_dict.values()) #list of values of location occurrences
 	count_values = sorted(i for i in count_values if i < 200)
@@ -147,7 +149,6 @@ def main():
 	count_location = getList(location_count_dict) #list of locations, no dublicates and in same order as previous values
 	location_counter = Counter(ListOfLocations)
 	print(ListOfLengths)
-	print("\n\n",location_count, "\n") #prints all locations with their occurrences
 	plt.bar(range(len(count_values)), count_values)#location occurrences
 	plt.title("Location distribution")
 	plt.show()
@@ -168,5 +169,6 @@ def main():
 	ClusteringHist(G)
 	PowerLawCentrality(G)
 	PowerLawClustering(G)
+	
 
 main()
