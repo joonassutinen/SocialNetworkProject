@@ -5,7 +5,9 @@ from collections import Counter
 import powerlaw
 import matplotlib.pyplot as plt
 import networkx as nx
-
+from networkx.algorithms import community
+import itertools
+import re
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
@@ -47,6 +49,9 @@ def ConstructGraph(ListOfPosts):
 	for j in ListOfPosts:
 		for k in j.responseto:
 			G.add_edge(j.username, k)
+	LargestComponent = max(nx.connected_components(G), key=len)
+	LargestSubgraph = G.subgraph(LargestComponent)
+	S = nx.Graph(LargestSubgraph)
 	pos = nx.spring_layout(G, k=0.2)
 	plt.figure(2, figsize=(30, 30))
 	nx.draw(G, pos=pos)
@@ -58,7 +63,7 @@ def TableforGraph(G):
 	ConnectedComponents = nx.connected_components(G)
 	NumOfEdges = G.number_of_edges()
 	NumOfNodes = G.number_of_nodes()
-	##Diameter = nx.diameter(nx.connected_components(G))
+	Diameter = "Infinite"
 	NumOfConnectedComponents = nx.number_connected_components(G)
 	AverageClustering = nx.average_clustering(G)
 	DegreeCentrality = nx.degree_centrality(G)
@@ -68,7 +73,7 @@ def TableforGraph(G):
 	GraphTable = {
 			"Number of edges": NumOfEdges,
 			"Number of nodes": NumOfNodes,
-			"Diameter": "To_Be_Added",
+			"Diameter": Diameter,
 			"Number of connected components": NumOfConnectedComponents, 
 			"Average clustering": AverageClustering,
 			"Average degree centrality": AverageDegreeCentrality,
@@ -109,6 +114,31 @@ def PowerLawClustering(G):
 	plt.title("power law distribution of local clustering")
 	return plt.show()
 
+def GirvanNewman(G):
+	comp = community.girvan_newman(G)
+	k = 15
+	communitylist = []
+	for communities in itertools.islice(comp, k):
+		communitylist = list(sorted(c) for c in communities)
+	communitylist.sort(key=len,reverse=True)
+	communityandsize = []
+	for i in communitylist:
+		communityandsize.append([i, len(i)])
+	return(communityandsize)
+
+def CommunityRep(communityandsize, ListOfPosts):
+	for i in communityandsize:
+		currentcommunityrep = 0
+		for j in i[0]:
+			currentposter = j
+			for k in ListOfPosts:
+				if k.username == currentposter:
+					currentcommunityrep += int(k.reputation.split()[1]) 
+		i.append(currentcommunityrep)
+		print("Community:", i[0], "Size:", i[1], "Total Reputation:", i[2])
+
+
+
 
 def main():
 	with io.open("ForumContent.txt", "r", encoding="utf-8") as f:
@@ -131,11 +161,10 @@ def main():
 		for j in responses:
 			responseto.append(j.get_text())	
 		postdate = i.find(class_="thead").text.strip()
-		reputation = i.find(class_="smallfont").text.strip().replace("\n", " ").replace("\t", "")
+		reputation = i.find(text = re.compile('^Reputation: +[0-9]{1,9}'))
 		ListOfPosts.append(Post(postnumber, username, location, comment, postdate, reputation, responseto))
 	for i in ListOfPosts:
-		if i.username == "Supervision required":
-			print("\n\n", i.postnumber, i.username, i.location, i.postdate, i.reputation, "Response to:", i.responseto, "\n")
+		print("\n\n", i.postnumber, i.username, i.location, i.postdate, i.reputation, "Response to:", i.responseto, "\n")
 	
 
 	#count location occurrences
@@ -169,6 +198,7 @@ def main():
 	ClusteringHist(G)
 	PowerLawCentrality(G)
 	PowerLawClustering(G)
-	
+	CommunityAndSize = GirvanNewman(G)
+	CommunityRep(CommunityAndSize, ListOfPosts)
 
 main()
