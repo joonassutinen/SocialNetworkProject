@@ -59,13 +59,13 @@ def ConstructGraph(ListOfPosts):
 	nx.draw(G, pos=pos)
 	nx.draw_networkx_labels(G, pos=pos, font_color="red")
 	plt.show()
-	return(G)
+	return(G, S)
 
-def TableforGraph(G):
+def TableforGraph(G, S):
 	ConnectedComponents = nx.connected_components(G)
 	NumOfEdges = G.number_of_edges()
 	NumOfNodes = G.number_of_nodes()
-	Diameter = "Infinite"
+	Diameter = nx.diameter(S)
 	NumOfConnectedComponents = nx.number_connected_components(G)
 	AverageClustering = nx.average_clustering(G)
 	DegreeCentrality = nx.degree_centrality(G)
@@ -226,8 +226,8 @@ def main():
     print(results.power_law.xmin)
     R, p = results.distribution_compare('power_law', 'lognormal')
     
-    G = ConstructGraph(ListOfPosts)
-    Table = TableforGraph(G)
+    G, S = ConstructGraph(ListOfPosts)
+    Table = TableforGraph(G, S)
     print(Table)
     #part 4 histogram
     postsLength(ListOfPosts)

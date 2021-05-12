@@ -8,6 +8,8 @@ import networkx as nx
 from networkx.algorithms import community
 import itertools
 import re
+import nltk
+import seaborn as sns
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
@@ -57,13 +59,19 @@ def ConstructGraph(ListOfPosts):
 	nx.draw(G, pos=pos)
 	nx.draw_networkx_labels(G, pos=pos, font_color="red")
 	plt.show()
-	return(G)
+	return(G, S)
 
-def TableforGraph(G):
+def TableforGraph(G, S):
 	ConnectedComponents = nx.connected_components(G)
 	NumOfEdges = G.number_of_edges()
 	NumOfNodes = G.number_of_nodes()
-	Diameter = "Infinite"
+	Diameter = 0
+	for i in ConnectedComponents:
+		Subgraph = G.subgraph(i)
+		newgraph = nx.Graph(Subgraph)
+		newdiameter = nx.diameter(newgraph)
+		if newdiameter > Diameter:
+			Diameter = newdiameter
 	NumOfConnectedComponents = nx.number_connected_components(G)
 	AverageClustering = nx.average_clustering(G)
 	DegreeCentrality = nx.degree_centrality(G)
@@ -82,37 +90,70 @@ def TableforGraph(G):
 
 	return(GraphTable)
 
+# *************** Part 3 *******************
+def length_post(post):
+    sent_text = nltk.sent_tokenize(post)
+    words = [word for sent in sent_text for word in nltk.word_tokenize(sent) if word.isalpha()]
+    
+    return len(words)
+
+# *************** Part 4 *******************
+def postsLength(ListOfPosts):
+    
+    lengths = []
+    for post in ListOfPosts:
+        lengths.append( length_post(post.comment) )
+        
+    sns.histplot(lengths, bins=10)
+    plt.ylabel('Length of Posts')
+    plt.title('Histogram for length of posts')
+    plt.show()
+
+# *************** Part 5 *******************
+
+def topRegionsPostLength(ListOfPosts, location_count):
+    top_regions = sorted(location_count, key=location_count.get, reverse=True)[1:6]
+    lengths = []
+    for post in ListOfPosts:
+        if post.location in top_regions:
+            lengths.append( length_post(post.comment) )
+            
+    sns.histplot(lengths, bins=10)  
+    plt.ylabel('Length of Posts')
+    plt.title('Histogram for length of posts')
+    plt.show()
+  
 def CentralityHist(G):
-	DegreeCentrality = nx.degree_centrality(G)
-	plt.figure()
-	plt.title("Degree centrality distribution")
-	plt.hist(list(DegreeCentrality.values()))
-	return plt.show()
+    DegreeCentrality = nx.degree_centrality(G)
+    plt.figure()
+    plt.title("Degree centrality distribution")
+    plt.hist(list(DegreeCentrality.values()))
+    return plt.show()
 
 def ClusteringHist(G):
-	localClustering = nx.clustering(G)
-	plt.figure()
-	plt.title("Local clustering coefficient distribution")
-	plt.hist(list(localClustering.values()))
-	return plt.show()
+    localClustering = nx.clustering(G)
+    plt.figure()
+    plt.title("Local clustering coefficient distribution")
+    plt.hist(list(localClustering.values()))
+    return plt.show()
 
 def PowerLawCentrality(G):
-	DegreeCentrality = nx.degree_centrality(G)
-	DegreeCentrality_values = list(DegreeCentrality.values())
-	DegreeCentrality_values = sorted(DegreeCentrality_values, reverse=True)
-	print(DegreeCentrality_values)
-	plt.plot(DegreeCentrality_values)
-	plt.title("power law distribution of degree centrality")
-	return plt.show()
+    DegreeCentrality = nx.degree_centrality(G)
+    DegreeCentrality_values = list(DegreeCentrality.values())
+    DegreeCentrality_values = sorted(DegreeCentrality_values, reverse=True)
+    print(DegreeCentrality_values)
+    plt.plot(DegreeCentrality_values)
+    plt.title("power law distribution of degree centrality")
+    return plt.show()
 
 def PowerLawClustering(G):
-	localClustering = nx.clustering(G)
-	localClustering_values = list(localClustering.values())
-	localClustering_values = sorted(localClustering_values, reverse=True)
-	print(localClustering_values)
-	plt.plot(localClustering_values)
-	plt.title("power law distribution of local clustering")
-	return plt.show()
+    localClustering = nx.clustering(G)
+    localClustering_values = list(localClustering.values())
+    localClustering_values = sorted(localClustering_values, reverse=True)
+    print(localClustering_values)
+    plt.plot(localClustering_values)
+    plt.title("power law distribution of local clustering")
+    return plt.show()
 
 def GirvanNewman(G):
 	comp = community.girvan_newman(G)
@@ -141,64 +182,69 @@ def CommunityRep(communityandsize, ListOfPosts):
 
 
 def main():
-	with io.open("ForumContent.txt", "r", encoding="utf-8") as f:
-		Text = f.read()
-	soup = BeautifulSoup(Text, 'html.parser')
-	posts = soup.find_all(id= lambda x: x and x.startswith("post60"))
-	index = 1
-	ListOfPosts = []
-	ListOfLocations = []
-	ListOfLengths = []
-	for i in posts:
-		responseto = []
-		postnumber = index
-		index += 1
-		location = i.find(text= lambda x: x and x.startswith("Location: "))
-		username = i.find(class_="bigusername").text
-		comment = i.find(id= lambda x: x and x.startswith("post_message_")).text
-		responses = i.find_all("strong")
-		ListOfLocations.append(location)
-		for j in responses:
-			responseto.append(j.get_text())	
-		postdate = i.find(class_="thead").text.strip()
-		reputation = i.find(text = re.compile('^Reputation: +[0-9]{1,9}'))
-		ListOfPosts.append(Post(postnumber, username, location, comment, postdate, reputation, responseto))
-	for i in ListOfPosts:
-		print("\n\n", i.postnumber, i.username, i.location, i.postdate, i.reputation, "Response to:", i.responseto, "\n")
+    with io.open("ForumContent.txt", "r", encoding="utf-8") as f:
+        Text = f.read()
+    soup = BeautifulSoup(Text, 'html.parser')
+    posts = soup.find_all(id= lambda x: x and x.startswith("post60"))
+    index = 1
+    ListOfPosts = []
+    ListOfLocations = []
+    ListOfLengths = []
+    for i in posts:
+        responseto = []
+        postnumber = index
+        index += 1
+        location = i.find(text= lambda x: x and x.startswith("Location: "))
+        username = i.find(class_="bigusername").text
+        comment = i.find(id= lambda x: x and x.startswith("post_message_")).text
+        responses = i.find_all("strong")
+        ListOfLocations.append(location)
+        for j in responses:
+            responseto.append(j.get_text())	
+        postdate = i.find(class_="thead").text.strip()
+        reputation = i.find(text = re.compile('^Reputation: +[0-9]{1,9}'))
+        ListOfPosts.append(Post(postnumber, username, location, comment, postdate, reputation, responseto))
+
+    for i in ListOfPosts[:5]:
+        print("\n\n", i.postnumber, i.username, i.location, i.postdate, i.reputation, "Response to:", i.responseto, "\n")
 	
 
 	#count location occurrences
-	def getList(dict):
-		return list(dict.keys())
-
-	location_count_dict = dict(Counter(ListOfLocations))
-	count_values = list(location_count_dict.values()) #list of values of location occurrences
-	count_values = sorted(i for i in count_values if i < 200)
-	print(count_values)
-	count_location = getList(location_count_dict) #list of locations, no dublicates and in same order as previous values
-	location_counter = Counter(ListOfLocations)
-	print(ListOfLengths)
-	plt.bar(range(len(count_values)), count_values)#location occurrences
-	plt.title("Location distribution")
-	plt.show()
+    def getList(dict):
+        return list(dict.keys())
+    
+    location_count_dict = dict(Counter(ListOfLocations))
+    count_values = list(location_count_dict.values()) #list of values of location occurrences
+    count_values = sorted(i for i in count_values if i < 200)
+    print(count_values)
+    count_location = getList(location_count_dict) #list of locations, no dublicates and in same order as previous values
+    location_counter = Counter(ListOfLocations)
+    print(ListOfLengths)
+    plt.bar(range(len(count_values)), count_values)#location occurrences
+    plt.title("Location distribution")
+    plt.show()
 
 
 
 	#powerlaw distribution, can not be done with given values
-	results = powerlaw.Fit(count_values)
-	print(results.power_law.alpha)
-	print(results.power_law.xmin)
-	R, p = results.distribution_compare('power_law', 'lognormal')
-
-	G = ConstructGraph(ListOfPosts)
-	Table = TableforGraph(G)
-	print(Table)
-
-	CentralityHist(G)
-	ClusteringHist(G)
-	PowerLawCentrality(G)
-	PowerLawClustering(G)
-	CommunityAndSize = GirvanNewman(G)
-	CommunityRep(CommunityAndSize, ListOfPosts)
+    results = powerlaw.Fit(count_values)
+    print(results.power_law.alpha)
+    print(results.power_law.xmin)
+    R, p = results.distribution_compare('power_law', 'lognormal')
+    
+    G, S = ConstructGraph(ListOfPosts)
+    Table = TableforGraph(G, S)
+    print(Table)
+    #part 4 histogram
+    postsLength(ListOfPosts)
+    #part 5 histogram
+    topRegionsPostLength(ListOfPosts, location_count_dict)
+    
+    CentralityHist(G)
+    ClusteringHist(G)
+    PowerLawCentrality(G)
+    PowerLawClustering(G)
+    CommunityAndSize = GirvanNewman(G)
+    CommunityRep(CommunityAndSize, ListOfPosts)
 
 main()
