@@ -152,7 +152,10 @@ def PowerLawCentrality(G):
 	xlist = []
 	ylist = []
 	for i, j in enumerate(DegreeCentrality_values):
-		xlist.append(i)
+		if i == 0:
+			xlist.append(0.000000001)
+		elif i != 0:
+			xlist.append(i)
 		ylist.append(j)
 	centrality_count_dict = dict(Counter(DegreeCentrality_values))
 	centrality_count = list(centrality_count_dict.values())
@@ -174,13 +177,17 @@ def PowerLawClustering(G):
 	xlist = []
 	ylist = []
 	for i, j in enumerate(localClustering_values):
-		xlist.append(i)
+		if i == 0:
+			xlist.append(0.000000001)
+		elif i != 0:
+			xlist.append(i)
 		ylist.append(j)
 	clustering_count_dict = dict(Counter(localClustering_values))
 	clustering_count = list(clustering_count_dict.values())
 	rank = list(range(1,len(clustering_count)+1))
 	print(localClustering_values, "\n\n", clustering_count, "\n\n", rank)
 	popt, pcov = curve_fit(func_powerlaw, xlist, ylist, maxfev=2000 )
+	print(popt)
 	plt.plot(xlist, func_powerlaw(xlist, *popt), 'g-', label='power law')
 	plt.plot(xlist,  ylist, 'bo', label='data')
 	plt.title("power law distribution of local clustering")
