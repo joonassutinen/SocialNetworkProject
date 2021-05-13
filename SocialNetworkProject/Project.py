@@ -10,6 +10,7 @@ import itertools
 import re
 import nltk
 import seaborn as sns
+import plotly.graph_objects as go
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
@@ -87,6 +88,9 @@ def TableforGraph(G, S):
 			"Average degree centrality": AverageDegreeCentrality,
 			"Average degree closeness centrality": AverageDegreeClosenessCentrality
 	}
+	fig = go.Figure(data=[go.Table(cells=dict(values=[list(GraphTable.keys()), list(GraphTable.values())
+                     ]))])
+	fig.show()
 
 	return(GraphTable)
 
@@ -185,7 +189,7 @@ def main():
     with io.open("ForumContent.txt", "r", encoding="utf-8") as f:
         Text = f.read()
     soup = BeautifulSoup(Text, 'html.parser')
-    posts = soup.find_all(id= lambda x: x and x.startswith("post60"))
+    posts = soup.find_all(id= lambda x: x and x.startswith("post6"))
     index = 1
     ListOfPosts = []
     ListOfLocations = []
@@ -222,15 +226,19 @@ def main():
     print(ListOfLengths)
     plt.bar(range(len(count_values)), count_values)#location occurrences
     plt.title("Location distribution")
+    plt.xlabel("Different locations as numbers")
+    plt.ylabel("Number of posts from location")
     plt.show()
 
 
 
 	#powerlaw distribution, can not be done with given values
-    results = powerlaw.Fit(count_values)
+    results = powerlaw.Fit(count_values, discrete=True)
     print(results.power_law.alpha)
     print(results.power_law.xmin)
     R, p = results.distribution_compare('power_law', 'lognormal')
+    print(R, p)
+    plt.show()
     
     G, S = ConstructGraph(ListOfPosts)
     Table = TableforGraph(G, S)
