@@ -5,6 +5,12 @@ from collections import Counter
 import powerlaw
 import matplotlib.pyplot as plt
 import networkx as nx
+from networkx.algorithms import community
+import itertools
+import re
+import nltk
+import seaborn as sns
+from scipy.optimize import curve_fit
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
@@ -238,17 +244,6 @@ def main():
     plt.ylabel("Number of posts from location")
     plt.show()
 
-#	def func_powerlaw(x, m, c, c0):
-#		return c0 + x**m * c
-#	popt, pcov = curve_fit(func_powerlaw, count_values, centrality_values, maxfev=2000 )
-#	plt.plot(centrality_count, func_powerlaw(centrality_count, *popt), 'g-', label='power law')
-#	plt.plot(centrality_count,  centrality_values, 'bo', label='data')
-#	plt.title("power law distribution of degree centrality")
-#	plt.legend()
-#	plt.show()
-
-	
-
 	#powerlaw distribution, can not be done with given values
     results = powerlaw.Fit(count_values, discrete=True)
     print(results.power_law.alpha)
@@ -271,7 +266,5 @@ def main():
     PowerLawClustering(G)
     CommunityAndSize = GirvanNewman(G)
     CommunityRep(CommunityAndSize, ListOfPosts)
-
-	
 
 main()
