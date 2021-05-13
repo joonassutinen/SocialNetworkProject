@@ -89,8 +89,9 @@ def TableforGraph(G, S):
 			"Average degree centrality": AverageDegreeCentrality,
 			"Average degree closeness centrality": AverageDegreeClosenessCentrality
 	}
-	fig = go.Figure(data=[go.Table(cells=dict(values=[list(GraphTable.keys()), list(GraphTable.values())
+	fig = go.Figure(data=[go.Table(columnwidth = [100,80], cells=dict(values=[list(GraphTable.keys()), list(GraphTable.values())
                      ]))])
+	fig.update_layout(width=600, height=800)
 	fig.show()
 
 	return(GraphTable)
@@ -147,13 +148,18 @@ def PowerLawCentrality(G):
 		return c0 + x**m * c
 	DegreeCentrality = nx.degree_centrality(G)
 	DegreeCentrality_values = list(DegreeCentrality.values())
-	DegreeCentrality_values = sorted(DegreeCentrality_values)
+	DegreeCentrality_values = sorted(DegreeCentrality_values, reverse = True)
+	xlist = []
+	ylist = []
+	for i, j in enumerate(DegreeCentrality_values):
+		xlist.append(i)
+		ylist.append(j)
 	centrality_count_dict = dict(Counter(DegreeCentrality_values))
 	centrality_count = list(centrality_count_dict.values())
 	rank = list(range(1,len(centrality_count)+1))
-	popt, pcov = curve_fit(func_powerlaw, rank, centrality_count, maxfev=2000 )
-	plt.plot(rank, func_powerlaw(rank, *popt), 'g-', label='power law')
-	plt.plot(centrality_count,  rank, 'bo', label='data')
+	popt, pcov = curve_fit(func_powerlaw, xlist, ylist, maxfev=2000 )
+	plt.plot(xlist, func_powerlaw(xlist, *popt), 'g-', label='power law')
+	plt.plot(xlist,  ylist, 'bo', label='data')
 	plt.title("power law distribution of degree centrality")
 	plt.legend()
 	return plt.show()
@@ -161,15 +167,22 @@ def PowerLawCentrality(G):
 def PowerLawClustering(G):
 	def func_powerlaw(x, m, c, c0):
 		return c0 + x**m * c
+
 	localClustering = nx.clustering(G)
 	localClustering_values = list(localClustering.values())
-	localClustering_values = sorted(localClustering_values)
+	localClustering_values = sorted(localClustering_values, reverse = True)
+	xlist = []
+	ylist = []
+	for i, j in enumerate(localClustering_values):
+		xlist.append(i)
+		ylist.append(j)
 	clustering_count_dict = dict(Counter(localClustering_values))
 	clustering_count = list(clustering_count_dict.values())
 	rank = list(range(1,len(clustering_count)+1))
-	popt, pcov = curve_fit(func_powerlaw, rank, clustering_count, maxfev=2000 )
-	plt.plot(rank, func_powerlaw(rank, *popt), 'g-', label='power law')
-	plt.plot(clustering_count,  rank, 'bo', label='data')
+	print(localClustering_values, "\n\n", clustering_count, "\n\n", rank)
+	popt, pcov = curve_fit(func_powerlaw, xlist, ylist, maxfev=2000 )
+	plt.plot(xlist, func_powerlaw(xlist, *popt), 'g-', label='power law')
+	plt.plot(xlist,  ylist, 'bo', label='data')
 	plt.title("power law distribution of local clustering")
 	plt.legend()
 	return plt.show()
