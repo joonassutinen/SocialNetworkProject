@@ -11,6 +11,7 @@ import re
 import nltk
 import seaborn as sns
 from scipy.optimize import curve_fit
+import plotly.graph_objects as go
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
