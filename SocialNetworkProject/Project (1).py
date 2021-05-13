@@ -5,6 +5,11 @@ from collections import Counter
 import powerlaw
 import matplotlib.pyplot as plt
 import networkx as nx
+from networkx.algorithms import community
+import itertools
+import re
+import nltk
+import seaborn as sns
 
 class Post:
 	def __init__(self, postnumber, username, location, comment, postdate, reputation, responseto):
@@ -60,13 +65,7 @@ def TableforGraph(G, S):
 	ConnectedComponents = nx.connected_components(G)
 	NumOfEdges = G.number_of_edges()
 	NumOfNodes = G.number_of_nodes()
-	Diameter = 0
-	for i in ConnectedComponents:
-		Subgraph = G.subgraph(i)
-		newgraph = nx.Graph(Subgraph)
-		newdiameter = nx.diameter(newgraph)
-		if newdiameter > Diameter:
-			Diameter = newdiameter
+	Diameter = nx.diameter(S)
 	NumOfConnectedComponents = nx.number_connected_components(G)
 	AverageClustering = nx.average_clustering(G)
 	DegreeCentrality = nx.degree_centrality(G)
@@ -82,9 +81,6 @@ def TableforGraph(G, S):
 			"Average degree centrality": AverageDegreeCentrality,
 			"Average degree closeness centrality": AverageDegreeClosenessCentrality
 	}
-	fig = go.Figure(data=[go.Table(cells=dict(values=[list(GraphTable.keys()), list(GraphTable.values())
-                     ]))])
-	fig.show()
 
 	return(GraphTable)
 
@@ -136,36 +132,22 @@ def ClusteringHist(G):
     return plt.show()
 
 def PowerLawCentrality(G):
-	def func_powerlaw(x, m, c, c0):
-		return c0 + x**m * c
-	DegreeCentrality = nx.degree_centrality(G)
-	DegreeCentrality_values = list(DegreeCentrality.values())
-	DegreeCentrality_values = sorted(DegreeCentrality_values)
-	centrality_count_dict = dict(Counter(DegreeCentrality_values))
-	centrality_count = list(centrality_count_dict.values())
-	rank = list(range(1,len(centrality_count)+1))
-	popt, pcov = curve_fit(func_powerlaw, rank, centrality_count, maxfev=2000 )
-	plt.plot(rank, func_powerlaw(rank, *popt), 'g-', label='power law')
-	plt.plot(centrality_count,  rank, 'bo', label='data')
-	plt.title("power law distribution of degree centrality")
-	plt.legend()
-	return plt.show()
+    DegreeCentrality = nx.degree_centrality(G)
+    DegreeCentrality_values = list(DegreeCentrality.values())
+    DegreeCentrality_values = sorted(DegreeCentrality_values, reverse=True)
+    print(DegreeCentrality_values)
+    plt.plot(DegreeCentrality_values)
+    plt.title("power law distribution of degree centrality")
+    return plt.show()
 
 def PowerLawClustering(G):
-	def func_powerlaw(x, m, c, c0):
-		return c0 + x**m * c
-	localClustering = nx.clustering(G)
-	localClustering_values = list(localClustering.values())
-	localClustering_values = sorted(localClustering_values)
-	clustering_count_dict = dict(Counter(localClustering_values))
-	clustering_count = list(clustering_count_dict.values())
-	rank = list(range(1,len(clustering_count)+1))
-	popt, pcov = curve_fit(func_powerlaw, rank, clustering_count, maxfev=2000 )
-	plt.plot(rank, func_powerlaw(rank, *popt), 'g-', label='power law')
-	plt.plot(clustering_count,  rank, 'bo', label='data')
-	plt.title("power law distribution of local clustering")
-	plt.legend()
-	return plt.show()
+    localClustering = nx.clustering(G)
+    localClustering_values = list(localClustering.values())
+    localClustering_values = sorted(localClustering_values, reverse=True)
+    print(localClustering_values)
+    plt.plot(localClustering_values)
+    plt.title("power law distribution of local clustering")
+    return plt.show()
 
 def GirvanNewman(G):
 	comp = community.girvan_newman(G)
@@ -197,7 +179,7 @@ def main():
     with io.open("ForumContent.txt", "r", encoding="utf-8") as f:
         Text = f.read()
     soup = BeautifulSoup(Text, 'html.parser')
-    posts = soup.find_all(id= lambda x: x and x.startswith("post6"))
+    posts = soup.find_all(id= lambda x: x and x.startswith("post60"))
     index = 1
     ListOfPosts = []
     ListOfLocations = []
@@ -234,28 +216,15 @@ def main():
     print(ListOfLengths)
     plt.bar(range(len(count_values)), count_values)#location occurrences
     plt.title("Location distribution")
-    plt.xlabel("Different locations as numbers")
-    plt.ylabel("Number of posts from location")
     plt.show()
 
-#	def func_powerlaw(x, m, c, c0):
-#		return c0 + x**m * c
-#	popt, pcov = curve_fit(func_powerlaw, count_values, centrality_values, maxfev=2000 )
-#	plt.plot(centrality_count, func_powerlaw(centrality_count, *popt), 'g-', label='power law')
-#	plt.plot(centrality_count,  centrality_values, 'bo', label='data')
-#	plt.title("power law distribution of degree centrality")
-#	plt.legend()
-#	plt.show()
 
-	
 
 	#powerlaw distribution, can not be done with given values
-    results = powerlaw.Fit(count_values, discrete=True)
+    results = powerlaw.Fit(count_values)
     print(results.power_law.alpha)
     print(results.power_law.xmin)
     R, p = results.distribution_compare('power_law', 'lognormal')
-    print(R, p)
-    plt.show()
     
     G, S = ConstructGraph(ListOfPosts)
     Table = TableforGraph(G, S)
@@ -271,7 +240,5 @@ def main():
     PowerLawClustering(G)
     CommunityAndSize = GirvanNewman(G)
     CommunityRep(CommunityAndSize, ListOfPosts)
-
-	
 
 main()
