@@ -46,6 +46,8 @@ def DownloadAllForumMessages(): ## Downloads all the pages on the forum that are
 	with io.open("ForumContent.txt", "w", encoding="utf-8") as f:
 		f.write(AllPagesText)
 
+
+# *************** Part 6 *******************
 def ConstructGraph(ListOfPosts):
 	G = nx.Graph()
 	for i in ListOfPosts:
@@ -62,6 +64,9 @@ def ConstructGraph(ListOfPosts):
 	nx.draw_networkx_labels(G, pos=pos, font_color="red")
 	plt.show()
 	return(G, S)
+
+
+# *************** Part 7 *******************
 
 def TableforGraph(G, S):
 	ConnectedComponents = nx.connected_components(G)
@@ -129,6 +134,8 @@ def topRegionsPostLength(ListOfPosts, location_count):
     plt.title('Histogram for length of posts')
     plt.show()
   
+# *************** Part 8 *******************
+
 def CentralityHist(G):
     DegreeCentrality = nx.degree_centrality(G)
     plt.figure()
@@ -142,6 +149,7 @@ def ClusteringHist(G):
     plt.title("Local clustering coefficient distribution")
     plt.hist(list(localClustering.values()))
     return plt.show()
+
 
 def PowerLawCentrality(G):
 	def func_powerlaw(x, m, c, c0):
@@ -193,7 +201,7 @@ def PowerLawClustering(G):
 	plt.title("power law distribution of local clustering")
 	plt.legend()
 	return plt.show()
-
+# *************** Part 9 *******************
 def GirvanNewman(G):
 	comp = community.girvan_newman(G)
 	k = 15
@@ -205,7 +213,7 @@ def GirvanNewman(G):
 	for i in communitylist:
 		communityandsize.append([i, len(i)])
 	return(communityandsize)
-
+# *************** Part 10 *******************
 def CommunityRep(communityandsize, ListOfPosts):
 	for i in communityandsize:
 		currentcommunityrep = 0
